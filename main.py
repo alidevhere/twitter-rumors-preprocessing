@@ -1,11 +1,12 @@
+import numpy as np
 import pandas as pd
 import os
 import glob
-import pathlib
 import json
 import datetime
 import csv
-
+import matplotlib.pyplot as plt
+import random 
 class tweet:
 
 
@@ -55,8 +56,9 @@ def loadFile(event, filePath):
     data=list()
     rumourCount = 0
     non_rumourCount=0
-    rumor_folders=[f.replace("\\","/") for f in glob.glob(os.path.join(f'C:/Users/Mohammad Ali/PycharmProjects/twitterRumor/annotated-threads/{event}/{type[1]}',"*/"), recursive=False)]
-    non_rumor_folders = [f.replace("\\","/") for f in glob.glob(os.path.join(f'C:/Users/Mohammad Ali/PycharmProjects/twitterRumor/annotated-threads/{event}/{type[0]}',"*/"), recursive=False)]
+    #D:\BOOKS\twitterRumor\annotated-threads\charliehebdo\non-rumours
+    rumor_folders=[f.replace("\\","/") for f in glob.glob(os.path.join(f'D:/BOOKS/twitterRumor/annotated-threads/{event}/{type[1]}',"*/"), recursive=False)]
+    non_rumor_folders = [f.replace("\\","/") for f in glob.glob(os.path.join(f'D:/BOOKS/twitterRumor/annotated-threads//{event}/{type[0]}',"*/"), recursive=False)]
 
     '''    reading Rumor Folder  '''
 
@@ -119,7 +121,9 @@ def loadFile(event, filePath):
     '''   writting data to csv file    '''
 
     print(f'Writting "{event} " data to csv file')
-
+    random.shuffle(data)
+    random.shuffle(data)
+    random.shuffle(data)
     with open(filePath, 'w', newline='') as file:
         writer = csv.writer(file)
         for d in data:
@@ -134,17 +138,30 @@ def loadFile(event, filePath):
 
 
 
+
+
+
+
+
+
+
 if __name__ == '__main__':
     events = ["charliehebdo", "ferguson", "germanwings-crash", "gurlitt", "ottawashooting", "putinmissing",
               "sydneysiege"]
 
-    print('helloooooooooo')
-    '''
+
     for e in events:
         data = loadFile(e, f'D:/BOOKS/5th Sem/AI Lab/AI-PROJECT/CSV_Files/{e}.csv')
 
         with open(os.path.join('D:/BOOKS/5th Sem/AI Lab/AI-PROJECT/CSV_Files/DataDescription.csv'), 'a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(data)
-    '''
 
+    '''
+    data = pd.read_csv('D:/BOOKS/5th Sem/AI Lab/AI-PROJECT/CSV_Files/charliehebdo.csv')
+    df = pd.DataFrame(data)
+    #df.head(20)
+    print(df.values)
+    #plt.plot(df)
+    #plt.show()
+    '''
