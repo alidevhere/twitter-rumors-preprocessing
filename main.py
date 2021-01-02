@@ -6,7 +6,15 @@ import json
 import datetime
 import csv
 import matplotlib.pyplot as plt
-import random 
+import random
+from sklearn.model_selection import train_test_split
+from keras.models import Sequential
+from keras.layers import Dense,SimpleRNN,LSTM
+from sklearn.preprocessing import MinMaxScaler
+
+
+
+
 class tweet:
 
 
@@ -73,15 +81,18 @@ def loadFile(event, filePath):
             vector = [0, 0, 0, 0, 0, 1]
             #data.append(source_obj)
             reactions_paths= [f.replace('\\','/') for f in glob.glob(f'{f}/reactions/*.json')]
+            is_valid_source_tweet = False
 
             for l in reactions_paths:
                 reaction_tweet = json.load(open(l))
-                reaction_obj = tweet(reaction_tweet["created_at"], 0, 1,source_obj)
+                reaction_obj = tweet(reaction_tweet["created_at"], 0, 1, source_obj)
                 #data.append(reaction_obj)
                 if reaction_obj.time_series != -1 :
                     vector[reaction_obj.time_series] += 1
+                    is_valid_source_tweet = True
 
-            data.append(vector)
+            if is_valid_source_tweet:
+                data.append(vector)
 
             
 
@@ -103,15 +114,18 @@ def loadFile(event, filePath):
         #data.append(source_obj)
         reactions_paths = [f.replace('\\', '/') for f in glob.glob(f'{f}/reactions/*.json')]
         vector = [0, 0, 0, 0, 0, 0]
+        is_valid_source_tweet = False
 
         for l in reactions_paths:
             reaction_tweet = json.load(open(l))
-            reaction_obj = tweet(reaction_tweet["created_at"], 0, 0,source_obj)
+            reaction_obj = tweet(reaction_tweet["created_at"], 0, 0, source_obj)
             #data.append(reaction_obj)
             if reaction_obj.time_series != -1:
                 vector[reaction_obj.time_series] += 1
+                is_valid_source_tweet = True
 
-        data.append(vector)
+        if is_valid_source_tweet:
+            data.append(vector)
         #print('working...')
 
     print(f"Finished reading Rumor Folder of {event}")
@@ -134,14 +148,7 @@ def loadFile(event, filePath):
     print(f'SUMMARY = {event} has rumors= {rumourCount} and non-rumors={non_rumourCount} ')
 
     # return data description of loaded data
-    return [event,rumourCount,non_rumourCount,rumourCount+non_rumourCount]
-
-
-
-
-
-
-
+    return [event, rumourCount, non_rumourCount, rumourCount+non_rumourCount]
 
 
 
@@ -151,17 +158,45 @@ if __name__ == '__main__':
 
 
     for e in events:
-        data = loadFile(e, f'D:/BOOKS/5th Sem/AI Lab/AI-PROJECT/CSV_Files/{e}.csv')
+        data = pd.read_csv('D:/BOOKS/5th Sem/AI Lab/AI-PROJECT/CSV_Files/charliehebdo.csv', names=["2 T", "5 T", "10 T", "30 T", "60 T", "is_rumour"])
+        print('duplicate rows count = ', data.duplicated().sum())
+        data = data.drop_duplicates(keep='first')
+        print(data.shape)
 
+        x_data = data.iloc[:, 0:5].values
+        y_data = data.iloc[:, 5].values
+
+        # train the normalization
+        scaler = MinMaxScaler()
+        scaler = scaler.fit(x_data)
+
+        # normalize the dataset and print
+        x_data = scaler.transform(x_data)
+
+        # split into  train and test
+        x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.20, random_state=13)
+
+        # reshaping to 3D
+        x_train = x_train.reshape(x_train.shape[0], x_train.shape[1], 1)
+        x_test = x_test.reshape(x_test.shape[0], x_test.shape[1], 1)
+
+        # define model
+        model = Sequential()
+        model.add(LSTM(50, activation='relu', input_shape=(5, 1)))
+        model.add(Dense(1))
+        model.compile(optimizer='adam', loss='mse')
+        print(model.summary())
+
+        # fit model
+        model.fit(x_train, y_train, epochs=20, verbose=2)
+        # test_predict = model.predict(x_test)
+        print("Evaluate on test data")
+        results = model.evaluate(x_test, y_test)
+        print("Event= ",e," : test loss, test acc:", results)
+
+        '''
         with open(os.path.join('D:/BOOKS/5th Sem/AI Lab/AI-PROJECT/CSV_Files/DataDescription.csv'), 'a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(data)
+        '''
 
-    '''
-    data = pd.read_csv('D:/BOOKS/5th Sem/AI Lab/AI-PROJECT/CSV_Files/charliehebdo.csv')
-    df = pd.DataFrame(data)
-    #df.head(20)
-    print(df.values)
-    #plt.plot(df)
-    #plt.show()
-    '''
