@@ -1,3 +1,5 @@
+# 0 = non- rumor , 1 = rumor
+
 import pandas as pd
 import numpy as np
 from keras.models import Sequential
@@ -12,19 +14,12 @@ from tensorflow.keras import layers
 
 models_dir = 'D:/BOOKS/twitterRumor/models'
 
-def load_data():
+def load_data(event,time=60):
     events = ["charliehebdo", "ferguson", "germanwings-crash", "gurlitt", "ottawashooting", "putinmissing",
                 "sydneysiege"]
-    charlie = pd.read_csv('CSV_Files/charliehebdo.csv', names=['timeDiff', 'status', 'Freq'], header=0)
-    ferguson = pd.read_csv('CSV_Files/ferguson.csv',names=['timeDiff', 'status', 'Freq'], header=0)
-    germanwings = pd.read_csv('CSV_Files/germanwings-crash.csv',names=['timeDiff', 'status', 'Freq'], header=0)
-    gurlitt = pd.read_csv('CSV_Files/gurlitt.csv',names=['timeDiff', 'status', 'Freq'], header=0)
-    ottawashooting = pd.read_csv('CSV_Files/ottawashooting.csv',names=['timeDiff', 'status', 'Freq'], header=0)
-    putinmissing = pd.read_csv('CSV_Files/putinmissing.csv',names=['timeDiff', 'status', 'Freq'], header=0)
-    sydneysiege = pd.read_csv('CSV_Files/sydneysiege.csv',names=['timeDiff', 'status', 'Freq'], header=0)
-
-    training = pd.concat([charlie, ferguson, germanwings, gurlitt, ottawashooting, putinmissing, sydneysiege],ignore_index=True)
-    return training
+    data = pd.read_csv(f'CSV_Files/{events[event]}.csv', names=['timeDiff', 'status', 'Freq'], header=0)
+    
+    return data
 
 def split_train_test(training):
     x_train = training[['timeDiff','Freq']]
@@ -178,13 +173,14 @@ def Ensembler_result(models,x_test):
 
 if __name__ == "__main__":
 
-    data = load_data()
+    #["charliehebdo", "ferguson", "germanwings-crash", "gurlitt", "ottawashooting", "putinmissing","sydneysiege"]
+    data = load_data(0)
+
     train, test = split_train_test(data)
     
-    '''
-    print('train shape = ',train.shape)
-    print('test shape = ',test.shape)
-    '''
+    #print('train shape = ',train.shape)
+    #print('test shape = ',test.shape)
+    
     x_train, y_train = create_dataset(train, look_back=1)
     x_test, y_test = create_dataset(test, look_back=1)
     
@@ -193,36 +189,69 @@ if __name__ == "__main__":
     x_test = np.reshape(x_test, (x_test.shape[0], 1, x_test.shape[1]))
     
     # shapes
-    '''
-    print('x train shape=',x_train.shape)
-    print('y train shape=',y_train.shape)
-    print('x test shape=',x_test.shape)
-    print('y test shape=',y_test.shape)
-    print(x_train)
-    print(x_test)
-    '''
+    
+    #print('x train shape=',x_train.shape)
+    #print('y train shape=',y_train.shape)
+    #print('x test shape=',x_test.shape)
+    #print('y test shape=',y_test.shape)
+    #print(x_train)
+    #print(x_test)
     
     # Running and Saving Models
-    model1 = build_LSTM(x_train,y_train,True)
-    model2 = build_GRU(x_train,y_train,True)
-    model3 = build_bi_LSTM(x_train,y_train,True)
-    model4 = build_RNN(x_train,y_train,True)    
-    model5 = build_tcnn(x_train,y_train,True)
+    model1 = build_LSTM(x_train,y_train,False)
+    model2 = build_GRU(x_train,y_train,False)
+    model3 = build_bi_LSTM(x_train,y_train,False)
+    model4 = build_RNN(x_train,y_train,False)    
+    model5 = build_tcnn(x_train,y_train,False)
 
 
-    models = load_models()
+    load_models = False
     
+    if load_models == True:
+        models = load_models()
+    
+    else: # use above build models 
+        models = []
+        models.append(model1)
+        models.append(model2)
+        models.append(model3)
+        models.append(model4)
+        models.append(model5)
+
+
     result =  Ensembler_result(models,x_test)
 
     r = (result == y_test).sum()
     acc = r/len(y_test)
+    print('Non Rumor',(result == 0).sum() )
+
+    from sklearn.metrics import confusion_matrix
+    matrix = confusion_matrix(y_test,result)
+    #labels=['NonRumor','Rumor']
+    print('===='*10)
+    print(matrix)
+    print('Non-Rumor')
+    print('===='*10)
+    
+    TP = matrix[0][0]
+    FP = matrix[0][1]
+    FN = matrix[1][0]
+    TN = matrix[1][1]
+
+    accuracy = (TN+TP) /(TN+TP+FN+FP)
+    precision = TP / (TP+FP)
+    recall = TP /(TP+FN)
+
+    f1_score = 2*((precision * recall)/(precision + recall))
+
+    print('accuracy = ',accuracy)
+    print('precision = ',precision)
+    print('recall',recall)
+    print('f1 score',f1_score)
+
     print('===='*10)
     print('HURRAAAHHH !!!!\n accuracy = ',acc)
     print('===='*10)
     
     
-    #=== to check individula model accuracy==
-    
-    #_,acc=  models[0].evaluate(x_test,y_test,verbose=0)
-    #print('Model Accuracy: %.3f' % acc)
     
