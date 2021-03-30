@@ -95,7 +95,7 @@ def build_LSTM(x_train,y_train,save,event_name,time):
     model.add(Dense(1,activation='sigmoid'))
     model.compile( loss='mean_squared_error', optimizer='adam',metrics=["accuracy"])
     model.summary()
-    model.fit(x_train, y_train, epochs=20, batch_size=64, verbose=2)
+    model.fit(x_train, y_train, epochs=5, batch_size=64, verbose=2)
     
     if save == True: 
         model.save(f'{models_dir}/LSTM/LSTM_{event_name}_{time}')
@@ -115,7 +115,7 @@ def build_RNN(x_train,y_train,save,event_name,time):
 
     model.compile( loss='mean_squared_error', optimizer='adam',metrics=["accuracy"])
     
-    model.fit(x_train, y_train, epochs=20, batch_size=64, verbose=2)
+    model.fit(x_train, y_train, epochs=5, batch_size=64, verbose=2)
 
     if save==True:        
         model.save(f'{models_dir}/SimpleRNN/SimpleRNN_{event_name}_{time}')
@@ -141,7 +141,7 @@ def build_GRU(x_train, y_train,save,event_name,time):
     model.summary()
     
     model.compile( loss='mean_squared_error', optimizer='adam',metrics=["accuracy"])
-    model.fit(x_train, y_train, epochs=20, batch_size=64, verbose=2)
+    model.fit(x_train, y_train, epochs=5, batch_size=64, verbose=2)
     
     if save==True:
         model.save(f'{models_dir}/GRU/GRU_{event_name}_{time}')
@@ -156,7 +156,7 @@ def build_bi_LSTM(x_train, y_train,save,event_name,time):
     model.summary()
 
     model.compile( loss='mean_squared_error', optimizer='adam',metrics=["accuracy"])
-    model.fit(x_train, y_train, epochs=20, batch_size=64, verbose=2)
+    model.fit(x_train, y_train, epochs=5, batch_size=64, verbose=2)
     # epochs=20 changing to 30
 
     if save==True:
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     #=====================
     EVENT = 0
     # in seconds  120,300,600,1800,3600
-    TIME = 1800
+    TIME = 3600
     
     RUN_FROM_SAVED_MODELS = False
     
