@@ -14,11 +14,37 @@ from tensorflow.keras import layers
 
 models_dir = 'D:/BOOKS/twitterRumor/models'
 
+
+
+def build_confusion_matrix(test,predict):
+
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+
+    for i in range(len(predict)):
+
+        if test[i] == predict[i] == 1:
+            TP = TP + 1
+        elif test[i] == predict[i] == 0:
+            TN = TN + 1
+        elif test[i] != predict[i] and  predict[i] == 0:
+            FN = FN + 1
+        elif test[i] != predict[i] and  predict[i] == 1:
+            FP = FP + 1
+
+    return (TP,TN,FP,FN)
+
+
+
 def load_data(event,time=60):
     events = ["charliehebdo", "ferguson", "germanwings-crash", "gurlitt", "ottawashooting", "putinmissing",
                 "sydneysiege"]
     data = pd.read_csv(f'CSV_Files/{events[event]}.csv', names=['timeDiff', 'status', 'Freq'], header=0)
     
+    data = data[data['timeDiff'] <= time]
+    print(data)
     return data
 
 def split_train_test(training):
@@ -43,7 +69,7 @@ def create_dataset(x_train, look_back=1):
 
 
 
-def build_tcnn(x_train,y_train,save=False):
+def build_tcnn(x_train,y_train,save, event_name,time):
     look_back=1
     model = Sequential() 
     model.add(TCN(input_shape=(x_train.shape[1], look_back)) )
@@ -54,13 +80,13 @@ def build_tcnn(x_train,y_train,save=False):
     model.fit(x_train, y_train, epochs=5)#, validation_split=0.2
 
     if save == True: 
-        model.save(f'{models_dir}/TCNN')
+        model.save(f'{models_dir}/TCNN/TCNN_{event_name}_{time}')
     return model
 
 
 
 
-def build_LSTM(x_train,y_train,save=False):
+def build_LSTM(x_train,y_train,save,event_name,time):
     #,x_test, y_test
     look_back = 1
     model = Sequential()
@@ -72,12 +98,12 @@ def build_LSTM(x_train,y_train,save=False):
     model.fit(x_train, y_train, epochs=20, batch_size=64, verbose=2)
     
     if save == True: 
-        model.save(f'{models_dir}/LSTM')
+        model.save(f'{models_dir}/LSTM/LSTM_{event_name}_{time}')
     return model
 
 
 
-def build_RNN(x_train,y_train,save=False):
+def build_RNN(x_train,y_train,save,event_name,time):
     
     model = Sequential()
     model.add(layers.Embedding(input_dim=100, output_dim=64))
@@ -92,7 +118,7 @@ def build_RNN(x_train,y_train,save=False):
     model.fit(x_train, y_train, epochs=20, batch_size=64, verbose=2)
 
     if save==True:        
-        model.save(f'{models_dir}/SimpleRNN')
+        model.save(f'{models_dir}/SimpleRNN/SimpleRNN_{event_name}_{time}')
     return model
 
 
@@ -100,7 +126,7 @@ def build_RNN(x_train,y_train,save=False):
 
 
 
-def build_GRU(x_train, y_train,save=False):
+def build_GRU(x_train, y_train,save,event_name,time):
 
     model = keras.Sequential()
     model.add(layers.Embedding(input_dim=100, output_dim=64))
@@ -118,11 +144,11 @@ def build_GRU(x_train, y_train,save=False):
     model.fit(x_train, y_train, epochs=20, batch_size=64, verbose=2)
     
     if save==True:
-        model.save(f'{models_dir}/GRU')
+        model.save(f'{models_dir}/GRU/GRU_{event_name}_{time}')
     return model
 
 
-def build_bi_LSTM(x_train, y_train,save=False):
+def build_bi_LSTM(x_train, y_train,save,event_name,time):
     model = keras.Sequential()
     model.add(Bidirectional(LSTM(64, return_sequences=True), input_shape=(5, 1)) )
     model.add(Bidirectional(LSTM(32)))
@@ -134,19 +160,19 @@ def build_bi_LSTM(x_train, y_train,save=False):
     # epochs=20 changing to 30
 
     if save==True:
-        model.save(f'{models_dir}/BiLSTM')
+        model.save(f'{models_dir}/BiLSTM/BiLSTM_{event_name}_{time}')
     return model
 
 
 
-def load_models():
+def load_models(event,time):
     # loading mdoel
     models = []
-    models.append(keras.models.load_model(f'{models_dir}/LSTM'))
-    models.append(keras.models.load_model(f'{models_dir}/SimpleRNN') )
-    models.append(keras.models.load_model(f'{models_dir}/GRU'))
-    models.append(keras.models.load_model(f'{models_dir}/BiLSTM'))
-    models.append(keras.models.load_model(f'{models_dir}/TCNN'))
+    models.append(keras.models.load_model(f'{models_dir}/LSTM/LSTM_{event_name}_{time}'))
+    models.append(keras.models.load_model(f'{models_dir}/SimpleRNN/SimpleRNN_{event_name}_{time}') )
+    models.append(keras.models.load_model(f'{models_dir}/GRU/GRU_{event_name}_{time}'))
+    models.append(keras.models.load_model(f'{models_dir}/BiLSTM/BiLSTM_{event_name}_{time}'))
+    models.append(keras.models.load_model(f'{models_dir}/TCNN/TCNN_{event_name}_{time}'))
     return models
     
 
@@ -170,16 +196,13 @@ def Ensembler_result(models,x_test):
     return np.array(result)
 
 
-
-if __name__ == "__main__":
-
-    #["charliehebdo", "ferguson", "germanwings-crash", "gurlitt", "ottawashooting", "putinmissing","sydneysiege"]
-    data = load_data(0)
-
-    train, test = split_train_test(data)
+def main(EVENT,TIME,RUN_FROM_SAVED_MODELS,SAVE_MODEL_AFTER_TRAINING):
     
-    #print('train shape = ',train.shape)
-    #print('test shape = ',test.shape)
+    #["charliehebdo", "ferguson", "germanwings-crash", "gurlitt", "ottawashooting", "putinmissing","sydneysiege"]
+    # time in seocnds
+    data = load_data(event = EVENT, time=TIME)
+    
+    train, test = split_train_test(data)
     
     x_train, y_train = create_dataset(train, look_back=1)
     x_test, y_test = create_dataset(test, look_back=1)
@@ -188,27 +211,16 @@ if __name__ == "__main__":
     x_train = np.reshape(x_train, (x_train.shape[0], 1, x_train.shape[1]))
     x_test = np.reshape(x_test, (x_test.shape[0], 1, x_test.shape[1]))
     
-    # shapes
-    
-    #print('x train shape=',x_train.shape)
-    #print('y train shape=',y_train.shape)
-    #print('x test shape=',x_test.shape)
-    #print('y test shape=',y_test.shape)
-    #print(x_train)
-    #print(x_test)
-    
     # Running and Saving Models
-    model1 = build_LSTM(x_train,y_train,False)
-    model2 = build_GRU(x_train,y_train,False)
-    model3 = build_bi_LSTM(x_train,y_train,False)
-    model4 = build_RNN(x_train,y_train,False)    
-    model5 = build_tcnn(x_train,y_train,False)
+    model1 = build_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME )
+    model2 = build_GRU(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )
+    model3 = build_bi_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING ,EVENT,TIME  )
+    model4 = build_RNN(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )    
+    model5 = build_tcnn(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME  )
 
-
-    load_models = False
     
-    if load_models == True:
-        models = load_models()
+    if RUN_FROM_SAVED_MODELS == True:
+        models = load_models(EVENT,TIME)
     
     else: # use above build models 
         models = []
@@ -223,21 +235,9 @@ if __name__ == "__main__":
 
     r = (result == y_test).sum()
     acc = r/len(y_test)
-    print('Non Rumor',(result == 0).sum() )
-
-    from sklearn.metrics import confusion_matrix
-    matrix = confusion_matrix(y_test,result)
-    #labels=['NonRumor','Rumor']
-    print('===='*10)
-    print(matrix)
-    print('Non-Rumor')
-    print('===='*10)
     
-    TP = matrix[0][0]
-    FP = matrix[0][1]
-    FN = matrix[1][0]
-    TN = matrix[1][1]
-
+    TP,TN,FP,FN = build_confusion_matrix(y_test,result)
+    
     accuracy = (TN+TP) /(TN+TP+FN+FP)
     precision = TP / (TP+FP)
     recall = TP /(TP+FN)
@@ -246,12 +246,25 @@ if __name__ == "__main__":
 
     print('accuracy = ',accuracy)
     print('precision = ',precision)
-    print('recall',recall)
-    print('f1 score',f1_score)
+    print('recall = ',recall)
+    print('f1 score = ',f1_score)
 
-    print('===='*10)
-    print('HURRAAAHHH !!!!\n accuracy = ',acc)
-    print('===='*10)
+
+
+if __name__ == "__main__":
+
+
+    # JUST CHANGE PARAMETERS HERE
+    # charliehebdo=0, ferguson=1, germanwings-crash=2, gurlitt=3, ottawashooting=4, putinmissing=5,sydneysiege=6
+
+    #=====================
+    EVENT = 0
+    # in seconds  120,300,600,1800,3600
+    TIME = 300
+    
+    RUN_FROM_SAVED_MODELS = False
+    
+    SAVE_MODEL_AFTER_TRAINING=True
     
     
-    
+    main(EVENT,TIME,RUN_FROM_SAVED_MODELS,SAVE_MODEL_AFTER_TRAINING)
