@@ -260,7 +260,7 @@ if __name__ == "__main__":
     #=====================
     EVENT = 0
     # in seconds  120,300,600,1800,3600
-    TIME = 300
+    TIME = 1800
     
     RUN_FROM_SAVED_MODELS = False
     
