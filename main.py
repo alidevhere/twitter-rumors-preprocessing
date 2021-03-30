@@ -261,10 +261,12 @@ if __name__ == "__main__":
     EVENT = 0
     # in seconds  120,300,600,1800,3600
     TIME = 3600
-    
+    t=[120,300,600,1800,3600]
+
     RUN_FROM_SAVED_MODELS = False
     
     SAVE_MODEL_AFTER_TRAINING=True
     
-    
-    main(EVENT,TIME,RUN_FROM_SAVED_MODELS,SAVE_MODEL_AFTER_TRAINING)
+    for EVENT in range(1,6):    
+        for i in range(len(t)):
+           main(EVENT,t[i],RUN_FROM_SAVED_MODELS,SAVE_MODEL_AFTER_TRAINING)
