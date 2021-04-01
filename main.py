@@ -47,15 +47,21 @@ def load_data(event,time=60):
     print(data)
     return data
 
+import pdb
+from  sklearn.model_selection import train_test_split
 def split_train_test(training):
-    x_train = training[['timeDiff','Freq']]
     scaler =  MinMaxScaler(feature_range=(0,1))
-    x_train = scaler.fit_transform(training[['status']].values.reshape(-1, 1))
-    train_size = int(len(x_train) * 0.7)
-    test_size = len(x_train) - train_size
-    train, test = x_train[0:train_size,:], x_train[train_size:len(x_train),:]
+  
+    #X =  training.drop(columns=["status"])
+    #y = training["status"]
 
-    return train,test
+    training = scaler.fit_transform(training)
+    # pdb.set_trace()
+    train, test = train_test_split(training, test_size=0.3)
+    # X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=0.30, random_state=42)
+    # pdb.set_trace()
+    
+    return train, test
 
 
 
@@ -85,17 +91,18 @@ def build_tcnn(x_train,y_train,save, event_name,time):
 
 
 
-
 def build_LSTM(x_train,y_train,save,event_name,time):
     #,x_test, y_test
-    look_back = 1
+    seq = len(x_train)
+    units = int((seq +2) / 2)
+    look_back = 2
     model = Sequential()
-    model.add(LSTM(256, return_sequences = True, input_shape = (x_train.shape[1], look_back)))
-    model.add(LSTM(128,input_shape = (x_train.shape[1], look_back)))
+    model.add(LSTM(units, input_shape = (x_train.shape[1], look_back)))
+    #model.add(LSTM(128,input_shape = (x_train.shape[1], look_back)))
     model.add(Dense(1,activation='sigmoid'))
-    model.compile( loss='mean_squared_error', optimizer='adam',metrics=["accuracy"])
+    model.compile( loss='binary_crossentropy', optimizer='adam',metrics=["accuracy"])
     model.summary()
-    model.fit(x_train, y_train, epochs=5, batch_size=64, verbose=2)
+    model.fit(x_train, y_train, epochs=300, batch_size=32, verbose=2)
     
     if save == True: 
         model.save(f'{models_dir}/LSTM/LSTM_{event_name}_{time}')
@@ -196,58 +203,6 @@ def Ensembler_result(models,x_test):
     return np.array(result)
 
 
-def main(EVENT,TIME,RUN_FROM_SAVED_MODELS,SAVE_MODEL_AFTER_TRAINING):
-    
-    #["charliehebdo", "ferguson", "germanwings-crash", "gurlitt", "ottawashooting", "putinmissing","sydneysiege"]
-    # time in seocnds
-    data = load_data(event = EVENT, time=TIME)
-    
-    train, test = split_train_test(data)
-    
-    x_train, y_train = create_dataset(train, look_back=1)
-    x_test, y_test = create_dataset(test, look_back=1)
-    
-    # reshaping
-    x_train = np.reshape(x_train, (x_train.shape[0], 1, x_train.shape[1]))
-    x_test = np.reshape(x_test, (x_test.shape[0], 1, x_test.shape[1]))
-    
-    # Running and Saving Models
-    model1 = build_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME )
-    model2 = build_GRU(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )
-    model3 = build_bi_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING ,EVENT,TIME  )
-    model4 = build_RNN(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )    
-    model5 = build_tcnn(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME  )
-
-    
-    if RUN_FROM_SAVED_MODELS == True:
-        models = load_models(EVENT,TIME)
-    
-    else: # use above build models 
-        models = []
-        models.append(model1)
-        models.append(model2)
-        models.append(model3)
-        models.append(model4)
-        models.append(model5)
-
-
-    result =  Ensembler_result(models,x_test)
-
-    r = (result == y_test).sum()
-    acc = r/len(y_test)
-    
-    TP,TN,FP,FN = build_confusion_matrix(y_test,result)
-    
-    accuracy = (TN+TP) /(TN+TP+FN+FP)
-    precision = TP / (TP+FP)
-    recall = TP /(TP+FN)
-
-    f1_score = 2*((precision * recall)/(precision + recall))
-
-    print('accuracy = ',accuracy)
-    print('precision = ',precision)
-    print('recall = ',recall)
-    print('f1 score = ',f1_score)
 
 
 
@@ -266,10 +221,51 @@ if __name__ == "__main__":
     RUN_FROM_SAVED_MODELS = False
     
     SAVE_MODEL_AFTER_TRAINING=True
-    
-    main(3,3600,RUN_FROM_SAVED_MODELS,SAVE_MODEL_AFTER_TRAINING)
-   
+        #["charliehebdo", "ferguson", "germanwings-crash", "gurlitt", "ottawashooting", "putinmissing","sydneysiege"]
+    # time in seocnds
 
-#    for EVENT in range(1,6):    
-#        for i in range(len(t)-1):
-#
+
+
+    data = load_data(event = EVENT, time=TIME)
+    
+    train, test = split_train_test(data)
+    
+    x_train, y_train = create_dataset(train, look_back=2)
+    x_test, y_test = create_dataset(test, look_back=2)
+    # pdb.set_trace()
+    # reshaping
+    x_train = np.reshape(x_train, (x_train.shape[0], 1, x_train.shape[1]))
+    x_test = np.reshape(x_test, (x_test.shape[0], 1, x_test.shape[1]))
+    
+    # Running and Saving Models
+    model1 = build_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME )
+    #model2 = build_GRU(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )
+    # model3 = build_bi_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING ,EVENT,TIME  )
+    # model4 = build_RNN(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )    
+    # model5 = build_tcnn(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME  )
+
+    
+    #if RUN_FROM_SAVED_MODELS == True:
+    #    models = load_models(EVENT,TIME)
+    #
+    #else: # use above build models 
+    #    models = []
+    #    models.append(model1)
+    #    models.append(model2)
+    #    models.append(model3)
+    #    models.append(model4)
+    #    models.append(model5)
+    #result =  Ensembler_result(models,x_test)
+    #r = (result == y_test).sum()
+    #acc = r/len(y_test)
+    #
+    #TP,TN,FP,FN = build_confusion_matrix(y_test,result)
+    #
+    #accuracy = (TN+TP) /(TN+TP+FN+FP)
+    #precision = TP / (TP+FP)
+    #recall = TP /(TP+FN)
+    #f1_score = 2*((precision * recall)/(precision + recall))
+    #print('accuracy = ',accuracy)
+    #print('precision = ',precision)
+    #print('recall = ',recall)
+    #print('f1 score = ',f1_score)
