@@ -110,18 +110,16 @@ def build_LSTM(x_train,y_train,save,event_name,time):
 
 
 def build_RNN(x_train,y_train,save,event_name,time):
-    
-    model = Sequential()
-    model.add(layers.Embedding(input_dim=100, output_dim=64))
-    # The output of SimpleRNN will be a 2D tensor of shape (batch_size, 128)
-    model.add(SimpleRNN(128))
-    model.add(Dense(1,activation='sigmoid'))
-    #sigmoid added- 1 unit
-    model.summary()
+    seq = len(x_train)
+    units = int((seq +2) / 2)
+    look_back =2
 
-    model.compile( loss='mean_squared_error', optimizer='adam',metrics=["accuracy"])
-    
-    model.fit(x_train, y_train, epochs=5, batch_size=64, verbose=2)
+    model = Sequential()
+    model.add(SimpleRNN(units, input_shape = (x_train.shape[1], look_back)))
+    model.add(Dense(1,activation='sigmoid'))
+    model.compile( loss='binary_crossentropy', optimizer='adam',metrics=["accuracy"])
+    model.summary()
+    model.fit(x_train, y_train, epochs=300, batch_size=32, verbose=2)
 
     if save==True:        
         model.save(f'{models_dir}/SimpleRNN/SimpleRNN_{event_name}_{time}')
@@ -248,10 +246,10 @@ if __name__ == "__main__":
     x_test = np.reshape(x_test, (x_test.shape[0], 1, x_test.shape[1]))
     
     # Running and Saving Models
-    model1 = build_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME )
+    #model1 = build_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME )
     #model2 = build_GRU(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )
     # model3 = build_bi_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING ,EVENT,TIME  )
-    # model4 = build_RNN(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )    
+    model4 = build_RNN(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )    
     # model5 = build_tcnn(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME  )
 
     
