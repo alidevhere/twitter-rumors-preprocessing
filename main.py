@@ -130,25 +130,16 @@ def build_RNN(x_train,y_train,save,event_name,time):
 
 
 
-
-
-
 def build_GRU(x_train, y_train,save,event_name,time):
-
+    seq = len(x_train)
+    units = int((seq +2) / 2)
+    look_back =2
     model = keras.Sequential()
-    model.add(layers.Embedding(input_dim=100, output_dim=64))
-    # The output of GRU will be a 3D tensor of shape (batch_size, timesteps, 256)
-    model.add(GRU(256, return_sequences=True))
-
-    # The output of SimpleRNN will be a 2D tensor of shape (batch_size, 128)
-    model.add(SimpleRNN(128))
-
+    model.add(GRU(units, input_shape = (x_train.shape[1], look_back)))
     model.add(Dense(1,activation='sigmoid'))
-
+    model.compile( loss='binary_crossentropy', optimizer='adam',metrics=["accuracy"])
     model.summary()
-    
-    model.compile( loss='mean_squared_error', optimizer='adam',metrics=["accuracy"])
-    model.fit(x_train, y_train, epochs=5, batch_size=64, verbose=2)
+    model.fit(x_train, y_train, epochs=300, batch_size=32, verbose=2)
     
     if save==True:
         model.save(f'{models_dir}/GRU/GRU_{event_name}_{time}')
@@ -250,10 +241,10 @@ if __name__ == "__main__":
     
     # Running and Saving Models
     #model1 = build_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME )
-    #model2 = build_GRU(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )
+    model2 = build_GRU(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )
     # model3 = build_bi_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING ,EVENT,TIME  )
     #model4 = build_RNN(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )    
-    model5 = build_tcnn(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME  )
+    #model5 = build_tcnn(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME  )
 
     
     #if RUN_FROM_SAVED_MODELS == True:
