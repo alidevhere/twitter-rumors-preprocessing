@@ -223,16 +223,27 @@ if __name__ == "__main__":
     SAVE_MODEL_AFTER_TRAINING=True
         #["charliehebdo", "ferguson", "germanwings-crash", "gurlitt", "ottawashooting", "putinmissing","sydneysiege"]
     # time in seocnds
-
-
-
+    
     data = load_data(event = EVENT, time=TIME)
     
-    train, test = split_train_test(data)
+    # splitted into 70 - 30
+    train, test = train_test_split(data, test_size=0.3)
     
-    x_train, y_train = create_dataset(train, look_back=2)
-    x_test, y_test = create_dataset(test, look_back=2)
-    # pdb.set_trace()
+    x_train = train.drop(columns=["status"])
+    y_train = train["status"] 
+
+    scaler =  MinMaxScaler(feature_range=(0,1))
+    x_train = scaler.fit_transform(x_train)
+
+
+    x_test = test.drop(columns=["status"])
+    y_test = test["status"] 
+
+    scaler =  MinMaxScaler(feature_range=(0,1))
+    x_test = scaler.fit_transform(x_test)
+
+    #pdb.set_trace()
+
     # reshaping
     x_train = np.reshape(x_train, (x_train.shape[0], 1, x_train.shape[1]))
     x_test = np.reshape(x_test, (x_test.shape[0], 1, x_test.shape[1]))
