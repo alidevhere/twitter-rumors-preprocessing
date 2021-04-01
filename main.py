@@ -76,14 +76,17 @@ def create_dataset(x_train, look_back=1):
 
 
 def build_tcnn(x_train,y_train,save, event_name,time):
-    look_back=1
+    seq = len(x_train)
+    units = int((seq +2) / 2)
+    look_back = 2
+
     model = Sequential() 
-    model.add(TCN(input_shape=(x_train.shape[1], look_back)) )
+    model.add(TCN(units ,input_shape=(x_train.shape[1], look_back)) )
     model.add(Dense(1))
     model.compile(optimizer='adam', loss='mse',metrics=["accuracy"])
 
     tcn_full_summary(model, expand_residual_blocks=False)
-    model.fit(x_train, y_train, epochs=5)#, validation_split=0.2
+    model.fit(x_train, y_train, epochs=300)#, validation_split=0.2
 
     if save == True: 
         model.save(f'{models_dir}/TCNN/TCNN_{event_name}_{time}')
@@ -249,8 +252,8 @@ if __name__ == "__main__":
     #model1 = build_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME )
     #model2 = build_GRU(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )
     # model3 = build_bi_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING ,EVENT,TIME  )
-    model4 = build_RNN(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )    
-    # model5 = build_tcnn(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME  )
+    #model4 = build_RNN(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )    
+    model5 = build_tcnn(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME  )
 
     
     #if RUN_FROM_SAVED_MODELS == True:
