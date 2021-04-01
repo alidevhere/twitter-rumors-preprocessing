@@ -98,7 +98,6 @@ def build_LSTM(x_train,y_train,save,event_name,time):
     look_back = 2
     model = Sequential()
     model.add(LSTM(units, input_shape = (x_train.shape[1], look_back)))
-    #model.add(LSTM(128,input_shape = (x_train.shape[1], look_back)))
     model.add(Dense(1,activation='sigmoid'))
     model.compile( loss='binary_crossentropy', optimizer='adam',metrics=["accuracy"])
     model.summary()
