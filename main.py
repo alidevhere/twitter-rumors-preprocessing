@@ -147,16 +147,19 @@ def build_GRU(x_train, y_train,save,event_name,time):
 
 
 def build_bi_LSTM(x_train, y_train,save,event_name,time):
+    seq = len(x_train)
+    units = int((seq +2) / 2)
+    look_back =2
+    
+    
     model = keras.Sequential()
-    model.add(Bidirectional(LSTM(64, return_sequences=True), input_shape=(5, 1)) )
-    model.add(Bidirectional(LSTM(32)))
+    model.add(Bidirectional(LSTM(units),input_shape = (x_train.shape[1], look_back) ))
     model.add(Dense(1,activation='sigmoid'))
+    model.compile( loss='mean_squared_error', optimizer='adam',metrics=["accuracy"])
     model.summary()
 
-    model.compile( loss='mean_squared_error', optimizer='adam',metrics=["accuracy"])
-    model.fit(x_train, y_train, epochs=5, batch_size=64, verbose=2)
-    # epochs=20 changing to 30
-
+    model.fit(x_train, y_train, epochs=300, batch_size=32, verbose=2)
+    
     if save==True:
         model.save(f'{models_dir}/BiLSTM/BiLSTM_{event_name}_{time}')
     return model
@@ -241,8 +244,8 @@ if __name__ == "__main__":
     
     # Running and Saving Models
     #model1 = build_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME )
-    model2 = build_GRU(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )
-    # model3 = build_bi_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING ,EVENT,TIME  )
+    #model2 = build_GRU(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )
+    model3 = build_bi_LSTM(x_train,y_train,SAVE_MODEL_AFTER_TRAINING ,EVENT,TIME  )
     #model4 = build_RNN(x_train,y_train,SAVE_MODEL_AFTER_TRAINING     ,EVENT,TIME  )    
     #model5 = build_tcnn(x_train,y_train,SAVE_MODEL_AFTER_TRAINING    ,EVENT,TIME  )
 
